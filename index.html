@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>HU XINHAO | GLITCH CV</title>
+    <style>
+        /* 核心样式：极致对比 */
+        :root {
+            --bg: #000;
+            --primary: #00ff41; /* 极客绿 */
+            --accent: #fff;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--bg); color: var(--accent);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; cursor: pointer;
+        }
+
+        /* 页面容器：强制清空非活动页面 */
+        .page {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none; /* 默认完全消失 */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        .page.active {
+            display: flex; /* 仅活动页显示 */
+        }
+
+        /* 遮罩层：确保切换时上一页“死透” */
+        #flash-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--primary);
+            z-index: 100;
+            transform: scaleY(0);
+            pointer-events: none;
+        }
+
+        /* 内容动画：进场时带一点位移 */
+        .active .content-gate {
+            animation: slideIn 0.3s forwards cubic-bezier(0, 1.2, 1, 1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        /* 装饰元素 */
+        h1 { font-size: 6rem; margin: 0; text-transform: uppercase; letter-spacing: -5px; line-height: 0.9; }
+        .tag { background: var(--primary); color: #000; padding: 2px 10px; font-weight: bold; margin-bottom: 20px; align-self: flex-start; }
+        .list-item { border-bottom: 1px solid #333; padding: 15px 0; width: 100%; max-width: 900px; display: flex; justify-content: space-between; }
+        .list-item:hover { color: var(--primary); border-color: var(--primary); }
+        
+        .bg-grid {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px);
+            background-size: 40px 40px; z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div id="flash-overlay"></div>
+
+<div class="page active" id="p1">
+    <div class="content-gate">
+        <div class="tag">STAGE_01: VISUAL_PRODUCTION</div>
+        <h1>CGI / VFX</h1>
+        <div style="width: 100%; margin-top: 40px;">
+            <div class="list-item"><span>《火种计划》渲染制作</span><span>世界科幻大会</span></div>
+            <div class="list-item"><span>《女神异闻录：夜幕魅影》镜头</span><span>19W 播放</span></div>
+            <div class="list-item"><span>“特效小哥studio”抠像制作</span><span>300W 点击</span></div>
+            <div class="list-item"><span>梅见酒流媒体视频剪辑</span><span>江记酒庄</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page" id="p2">
+    <div class="content-gate">
+        <div class="tag">STAGE_02: DEV_LOGIC</div>
+        <h1>CODE / ALGO</h1>
+        <div style="width: 100%; margin-top: 40px;">
+            <div class="list-item"><span>蓝桥杯 C++ 程序设计</span><span>二等奖</span></div>
+            <div class="list-item"><span>编程语言能力</span><span>C++ / Python</span></div>
+            <div class="list-item"><span>理论储备</span><span>高等数学 / 算法</span></div>
+            <div class="list-item"><span>数值策划能力</span><span>Excel 公式</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page" id="p3">
+    <div class="content-gate">
+        <div class="tag">STAGE_03: PIPELINE</div>
+        <h1>ENGINES</h1>
+        <div style="width: 100%; margin-top: 40px;">
+            <div class="list-item"><span>3D 动画与建模</span><span>C4D / MAYA / UE</span></div>
+            <div class="list-item"><span>影视后期合成</span><span>PR / AE / NUKE</span></div>
+            <div class="list-item"><span>全流程经验</span><span>建模 / 动画 / 特效</span></div>
+            <div class="list-item"><span>后期处理</span><span>抠像 / 调色</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const pages = document.querySelectorAll('.page');
+    const overlay = document.getElementById('flash-overlay');
+    let current = 0;
+    let busy = false;
+
+    document.body.addEventListener('click', () => {
+        if (busy) return;
+        busy = true;
+
+        // Step 1: 遮罩闪现（瞬间拉满）
+        overlay.style.transition = 'transform 0.2s ease-in';
+        overlay.style.transform = 'scaleY(1)';
+
+        setTimeout(() => {
+            // Step 2: 在遮罩完全覆盖时，暴力切换 DOM 显隐
+            pages.forEach(p => p.classList.remove('active'));
+            
+            current = (current + 1) % pages.length;
+            pages[current].classList.add('active');
+
+            // Step 3: 遮罩撤离
+            overlay.style.transition = 'transform 0.2s ease-out';
+            overlay.style.transform = 'scaleY(0)';
+            overlay.style.transformOrigin = 'bottom';
+            
+            setTimeout(() => {
+                overlay.style.transformOrigin = 'top'; // 重置方向
+                busy = false;
+            }, 200);
+        }, 200);
+    });
+</script>
+
+</body>
+</html>
