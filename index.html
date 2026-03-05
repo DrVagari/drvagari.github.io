@@ -2,11 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>HU XINHAO | MOTION CV</title>
+    <title>胡昕浩 | 完整视觉简历</title>
     <style>
         :root {
             --bg: #050505;
             --p0: #00ff41; --p1: #00e5ff; --p2: #ff9d00; --p3: #ff00ff;
+            --fs-h1: clamp(2.5rem, 8vw, 6rem);
+            --fs-item: clamp(1rem, 2.2vw, 1.8rem);
         }
 
         body, html {
@@ -16,257 +18,244 @@
             overflow: hidden; cursor: none;
         }
 
-        /* --- 基础氛围层 --- */
-        #trail-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 10000; }
-        .crt-scanlines {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
-            background-size: 100% 4px; pointer-events: none; z-index: 1000;
+        /* --- 战术准星 --- */
+        #crosshair {
+            position: fixed; width: 40px; height: 40px;
+            border: 2px solid var(--p0); border-radius: 50%;
+            pointer-events: none; z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.1s, height 0.1s, border-color 0.3s;
         }
-        /* 随机大竖线 */
-        .v-glitch {
-            position: fixed; top: 0; width: 2px; height: 100%;
-            background: rgba(255, 255, 255, 0.05); pointer-events: none; z-index: 999;
+        #crosshair::before { content: ''; position: absolute; top: 50%; left: -10px; width: 30px; height: 2px; background: currentColor; transform: translateY(-50%); }
+        #crosshair::after { content: ''; position: absolute; left: 50%; top: -10px; width: 2px; height: 30px; background: currentColor; transform: translateX(-50%); }
+
+        /* --- 弹孔与装饰 --- */
+        .bullet-hole {
+            position: fixed; width: 50px; height: 50px;
+            background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%; pointer-events: none; z-index: 9000;
+            transform: translate(-50%, -50%); animation: holeFade 2s forwards;
+        }
+        @keyframes holeFade { 100% { opacity: 0; transform: translate(-50%, -50%) scale(2); } }
+
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 8000;
         }
 
         /* --- 页面容器 --- */
         .page {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; flex-direction: column; justify-content: center;
-            padding: 10vw; box-sizing: border-box; background: var(--bg);
+            padding: 5vw 8vw; box-sizing: border-box; background: var(--bg);
+            overflow-y: auto; /* 允许长内容滚动 */
         }
         .page.active { display: flex; z-index: 10; }
 
-        /* 内容动画容器 */
-        .content-box { transition: opacity 0.3s; }
+        /* 隐藏滚动条但保留功能 */
+        .page::-webkit-scrollbar { width: 0; }
+
+        .tag { border: 2px solid currentColor; padding: 4px 15px; font-size: 14px; margin-bottom: 1.5rem; align-self: flex-start; letter-spacing: 5px; }
+        h1 { font-size: var(--fs-h1); margin: 0 0 2rem 0; line-height: 1.1; font-weight: 900; }
         
-        /* 文字飞走动画类 */
-        .fly-away {
-            display: inline-block;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 1, 1), opacity 0.5s;
-        }
-
-        /* --- 视觉元素 --- */
-        .tag { border: 1px solid currentColor; padding: 2px 10px; font-size: 12px; margin-bottom: 20px; align-self: flex-start; letter-spacing: 3px; }
-        h1 { font-size: 6rem; margin: 0; line-height: 1; letter-spacing: -3px; font-weight: 900; }
+        .list-container { width: 100%; }
         .list-item { 
-            padding: 25px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.2rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .item-label { font-size: 1.5rem; color: #888; }
-        .item-value { font-weight: bold; font-family: monospace; }
+        .item-label { font-size: var(--fs-item); font-weight: 700; color: #eee; }
+        .item-desc { font-size: calc(var(--fs-item) * 0.6); color: #888; line-height: 1.6; }
+        .highlight { color: var(--p1); font-weight: bold; }
 
-        /* --- 转场执行层 --- */
+        .char { display: inline-block; transition: all 0.5s cubic-bezier(0.5, 0, 0.5, 1); }
+
         #shutter-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5000; }
-        .shutter-part { position: absolute; background: #000; }
+        .shutter-part { position: absolute; width: 100%; height: 100%; }
 
         .guide {
-            position: fixed; bottom: 30px; width: 100%; text-align: center;
-            font-size: 11px; letter-spacing: 10px; color: #444; text-transform: uppercase;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            font-size: 12px; letter-spacing: 8px; color: #444; text-transform: uppercase;
+            z-index: 10001; pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-<canvas id="trail-canvas"></canvas>
-<div class="crt-scanlines"></div>
+<div id="crosshair"></div>
+<div class="crt-overlay"></div>
 <div id="shutter-container"></div>
-<div class="guide">INTERFACE // 点击屏幕进行切割切换</div>
+<div class="guide">Target Acquired // 点击屏幕射击</div>
 
 <div class="page active" id="p0" data-color="var(--p0)">
     <div class="content-box">
-        <div class="tag">START_SYSTEM</div>
+        <div class="tag" style="color:var(--p0)">USER_AUTH: HUXINHAO</div>
         <h1 class="split-text">胡昕浩个人简历</h1>
-        <div style="margin-top: 30px; color: var(--p0); letter-spacing: 5px;">[ 视觉设计 / 技术开发 / 全流程合成 ]</div>
+        <div style="margin-top: 2rem; font-size: 1.5rem; color: #444; letter-spacing: 3px;">
+            [ 视觉设计 / 技术开发 / 全流程合成 ]
+        </div>
     </div>
 </div>
 
 <div class="page" id="p1" data-color="var(--p1)">
     <div class="content-box">
-        <div class="tag">01_PROJECTS</div>
+        <div class="tag" style="color:var(--p1)">01_PROJECTS</div>
         <h1 class="split-text">项目经历</h1>
         <div class="list-container">
-            <div class="list-item"><span class="item-label split-text">《火种计划》渲染制作</span><span class="item-value" style="color:var(--p1)">世界科幻大会</span></div>
-            <div class="list-item"><span class="item-label split-text">《P5X》手游推广动画</span><span class="item-value" style="color:var(--p1)">19W 播放</span></div>
-            <div class="list-item"><span class="item-label split-text">特效小哥studio 视频抠像</span><span class="item-value" style="color:var(--p1)">300W 点击</span></div>
-            <div class="list-item"><span class="item-label split-text">梅见酒流媒体剪辑</span><span class="item-value" style="color:var(--p1)">江记酒庄合作</span></div>
+            <div class="list-item">
+                <span class="item-label split-text">第八十一届世界科幻大会</span>
+                <span class="item-desc">参与展出短片<span class="highlight">《火种计划》</span>渲染制作。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">完美世界 P5X 手游</span>
+                <span class="item-desc">应北京冰封互娱（完美世界）邀请，为<span class="highlight">《女神异闻录：夜幕魅影》</span>提供视频合作，制作推广动画镜头，获19万播放。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">特效小哥 Studio</span>
+                <span class="item-desc">为400万粉丝博主提供视频抠像制作，该视频在B站获得<span class="highlight">300余万次点击</span>。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">梅见酒流媒体推广</span>
+                <span class="item-desc">参与重庆江记酒庄有限公司梅见酒的流媒体推广视频剪辑制作。</span>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="page" id="p2" data-color="var(--p2)">
     <div class="content-box">
-        <div class="tag">02_SKILLS</div>
+        <div class="tag" style="color:var(--p2)">02_SKILLS</div>
         <h1 class="split-text">个人技能</h1>
         <div class="list-container">
-            <div class="list-item"><span class="item-label split-text">3D 引擎</span><span class="item-value" style="color:var(--p2)">C4D / MAYA / UE</span></div>
-            <div class="list-item"><span class="item-label split-text">影视后期</span><span class="item-value" style="color:var(--p2)">AE / NUKE / PR</span></div>
-            <div class="list-item"><span class="item-label split-text">编程开发</span><span class="item-value" style="color:var(--p2)">C++ / Python</span></div>
-            <div class="list-item"><span class="item-label split-text">核心逻辑</span><span class="item-value" style="color:var(--p2)">高数 / 算法 / 数值策划</span></div>
+            <div class="list-item">
+                <span class="item-label split-text">3D 动画全流程</span>
+                <span class="item-desc">具备建模、动画、特效等制作与合成经验。熟练使用 <span class="highlight">C4D、MAYA、虚幻引擎 (UE)</span>。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">影视后期经验</span>
+                <span class="item-desc">精通抠像、剪辑、视频调色。掌握 <span class="highlight">PR、AE、NUKE、达芬奇</span> 等专业后期制作软件。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">程序开发与逻辑</span>
+                <span class="item-desc">具备 <span class="highlight">C++、Python</span> 编写能力，自学高等数学与算法；了解数值策划及 Excel 高级公式。</span>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="page" id="p3" data-color="var(--p3)">
     <div class="content-box">
-        <div class="tag">03_HONORS</div>
-        <h1 class="split-text">荣誉与学习</h1>
+        <div class="tag" style="color:var(--p3)">03_HONORS</div>
+        <h1 class="split-text">个人荣誉</h1>
         <div class="list-container">
-            <div class="list-item"><span class="item-label split-text">蓝桥杯程序设计</span><span class="item-value" style="color:var(--p3)">全国二等奖</span></div>
-            <div class="list-item"><span class="item-label split-text">自主学习</span><span>程序美术全方位发展</span></div>
-            <div class="list-item"><span class="item-label split-text">数值储备</span><span>Excel 高级公式</span></div>
-            <div class="list-item"><span class="item-label split-text">综合产出</span><span>抠像 / 调色 / 合成</span></div>
+            <div class="list-item">
+                <span class="item-label split-text">蓝桥杯 C++ 程序设计</span>
+                <span class="item-desc">荣获由中华人民共和国工业和信息化部人才交流中心主办的 <span class="highlight">全国二等奖</span>。</span>
+            </div>
+            <div class="list-item">
+                <span class="item-label split-text">aigc创新MV制作挑战赛</span>
+                <span class="item-desc">星河视效科技有限公司 <span class="highlight">三等奖</span>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 1. 初始化文字解构 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playShotSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    const crosshair = document.getElementById('crosshair');
+    window.addEventListener('mousemove', e => {
+        crosshair.style.left = e.clientX + 'px';
+        crosshair.style.top = e.clientY + 'px';
+    });
+
     function prepareText() {
         document.querySelectorAll('.split-text').forEach(el => {
             const text = el.innerText;
             el.innerHTML = '';
-            [...text].forEach((char, i) => {
+            [...text].forEach(char => {
                 const span = document.createElement('span');
-                span.innerText = char;
-                span.className = 'fly-away-char';
-                span.style.display = 'inline-block';
+                span.innerText = char; span.className = 'char';
                 el.appendChild(span);
             });
         });
     }
     prepareText();
 
-    // --- 2. 鼠标拖尾 ---
-    const canvas = document.getElementById('trail-canvas');
-    const ctx = canvas.getContext('2d');
-    let points = [];
-    window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.onresize();
-    window.addEventListener('mousemove', e => points.push({ x: e.clientX, y: e.clientY, r: 15 }));
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.beginPath();
-        points.forEach((p, i) => {
-            if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
-            p.r *= 0.9;
-        });
-        ctx.stroke();
-        points = points.filter(p => p.r > 1);
-        requestAnimationFrame(draw);
-    }
-    draw();
-
-    // --- 3. 随机竖直扫描线 ---
-    setInterval(() => {
-        const line = document.createElement('div');
-        line.className = 'v-glitch';
-        line.style.left = Math.random() * 100 + '%';
-        line.style.width = Math.random() * 4 + 'px';
-        document.body.appendChild(line);
-        setTimeout(() => line.remove(), 1000);
-    }, 800);
-
-    // --- 4. 核心转场引擎 ---
     const pages = document.querySelectorAll('.page');
     const shutterBox = document.getElementById('shutter-container');
-    let current = 0;
-    let isBusy = false;
-    let effectIdx = 0;
+    let current = 0; let isBusy = false;
 
-    async function switchPage() {
+    async function switchPage(e) {
         if(isBusy) return;
-        isBusy = true;
+        playShotSound();
+        const hole = document.createElement('div');
+        hole.className = 'bullet-hole'; hole.style.left = e.clientX+'px'; hole.style.top = e.clientY+'px';
+        document.body.appendChild(hole); setTimeout(()=>hole.remove(), 2000);
 
+        isBusy = true;
         const nextPage = (current + 1) % pages.length;
         const color = pages[nextPage].dataset.color;
 
-        // A. 文字飞走逻辑
-        const chars = pages[current].querySelectorAll('.fly-away-char');
+        // 文字下坠
+        const chars = pages[current].querySelectorAll('.char');
         chars.forEach((c, i) => {
             setTimeout(() => {
-                c.style.transform = `translateX(${window.innerWidth}px) rotate(45deg)`;
+                c.style.transform = `translate(${(Math.random()-0.5)*100}px, ${window.innerHeight}px) rotate(45deg)`;
                 c.style.opacity = '0';
-            }, i * 30);
+            }, i * 20);
         });
 
-        await new Promise(r => setTimeout(r, chars.length * 30 + 200));
+        await new Promise(r => setTimeout(r, 400));
 
-        // B. 执行不同切割效果
+        // 覆盖转场
         shutterBox.innerHTML = '';
-        const mode = effectIdx % 3;
-        effectIdx++;
+        const d = document.createElement('div');
+        d.className = 'shutter-part'; d.style.background = color;
+        d.style.clipPath = 'circle(0% at ' + e.clientX + 'px ' + e.clientY + 'px)';
+        shutterBox.appendChild(d);
 
-        if(mode === 0) { // 斜切 Split
-            const s1 = createPart(color, 'polygon(0 0, 100% 0, 0 100%)');
-            const s2 = createPart(color, 'polygon(100% 0, 100% 100%, 0 100%)');
-            await animatePart(s1, 'translate(-100%, -100%)', 'translate(0,0)');
-            await animatePart(s2, 'translate(100%, 100%)', 'translate(0,0)');
-            updateDOM(nextPage);
-            await animatePart(s1, 'translate(0,0)', 'translate(100%, 100%)');
-            await animatePart(s2, 'translate(0,0)', 'translate(-100%, -100%)');
-        } 
-        else if(mode === 1) { // 纸片碎落 Fall
-            const cols = 6;
-            const parts = [];
-            for(let i=0; i<cols; i++) {
-                const p = createPart(color, `inset(0 ${100 - (i+1)*(100/cols)}% 0 ${i*(100/cols)}%)`);
-                parts.push(p);
-            }
-            await Promise.all(parts.map((p,i) => animatePart(p, 'translateY(-100%)', 'translateY(0)', i*50)));
-            updateDOM(nextPage);
-            await Promise.all(parts.map((p,i) => animatePart(p, 'translateY(0)', 'translateY(100%)', i*50)));
-        }
-        else { // 居中收缩中心线
-            const s = createPart(color, 'inset(0 0 0 0)');
-            s.style.transform = 'scaleY(0)';
-            await animatePart(s, 'scaleY(0)', 'scaleY(1)');
-            updateDOM(nextPage);
-            await animatePart(s, 'scaleY(1)', 'scaleY(0)');
-        }
+        // 扩张动画
+        await new Promise(r => {
+            d.style.transition = 'clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+            setTimeout(() => { d.style.clipPath = 'circle(150% at ' + e.clientX + 'px ' + e.clientY + 'px)'; setTimeout(r, 800); }, 20);
+        });
+
+        updateDOM(nextPage);
+
+        // 收缩消失
+        await new Promise(r => {
+            d.style.opacity = '0';
+            d.style.transition = 'opacity 0.4s ease';
+            setTimeout(r, 400);
+        });
 
         shutterBox.innerHTML = '';
         isBusy = false;
     }
 
-    function createPart(color, clip) {
-        const d = document.createElement('div');
-        d.className = 'shutter-part';
-        d.style.width = '100%'; d.style.height = '100%';
-        d.style.background = color;
-        d.style.clipPath = clip;
-        shutterBox.appendChild(d);
-        return d;
-    }
-
-    function animatePart(el, from, to, delay = 0) {
-        return new Promise(r => {
-            el.style.transition = 'none';
-            el.style.transform = from;
-            setTimeout(() => {
-                el.style.transition = 'transform 0.6s cubic-bezier(0.85, 0, 0.15, 1)';
-                el.style.transform = to;
-                el.style.transitionDelay = delay + 'ms';
-                setTimeout(r, 600 + delay);
-            }, 20);
-        });
-    }
-
     function updateDOM(idx) {
         pages.forEach(p => p.classList.remove('active'));
         pages[idx].classList.add('active');
-        // 重置文字状态
-        pages[idx].querySelectorAll('.fly-away-char').forEach(c => {
-            c.style.transition = 'none';
-            c.style.transform = 'none';
-            c.style.opacity = '1';
+        pages[idx].querySelectorAll('.char').forEach(c => {
+            c.style.transition = 'none'; c.style.transform = 'none'; c.style.opacity = '1';
         });
         current = idx;
+        crosshair.style.borderColor = pages[idx].dataset.color;
     }
 
-    document.body.addEventListener('click', switchPage);
+    document.body.addEventListener('mousedown', switchPage);
 </script>
 
 </body>
