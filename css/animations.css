@@ -1,0 +1,34 @@
+/* CRT 扫描线屏幕效果 */
+.crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+    background-size: 100% 4px; pointer-events: none; z-index: 8000;
+}
+
+/* 弹孔扩散动画 */
+.bullet-hole {
+    position: fixed; width: 50px; height: 50px;
+    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%; pointer-events: none; z-index: 9000;
+    transform: translate(-50%, -50%); 
+    animation: holeFade 2s forwards;
+}
+
+@keyframes holeFade { 
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2); } 
+}
+
+/* 字符拆分过渡 */
+.char { 
+    display: inline-block; 
+    transition: all 0.5s cubic-bezier(0.5, 0, 0.5, 1); 
+}
+
+/* 转场切片遮罩层 */
+#shutter-container { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    pointer-events: none; z-index: 5000; 
+}
+.shutter-part { 
+    position: absolute; width: 100%; height: 100%; 
+}
