@@ -1,0 +1,18 @@
+body {
+    background: var(--bg); 
+    color: #fff;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    cursor: none; /* 隐藏系统光标，为战术准星让路 */
+}
+
+h1 { 
+    font-size: var(--fs-h1); 
+    margin: 0 0 2rem 0; 
+    line-height: 1.1; 
+    font-weight: 900; 
+}
+
+.highlight { 
+    color: var(--p1); 
+    font-weight: bold; 
+}
