@@ -1,0 +1,30 @@
+/* 页面级大框架布局 */
+.page {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    display: none; 
+    flex-direction: column; 
+    justify-content: center;
+    padding: 5vw 8vw; 
+    box-sizing: border-box; 
+    background: var(--bg);
+    overflow-y: auto; /* 允许内部长内容滚动 */
+}
+
+.page.active { 
+    display: flex; 
+    z-index: 10; 
+}
+
+/* 教育经历双栏网格宏观布局 */
+.edu-shell {
+    width: min(100%, 980px);
+    display: grid;
+    grid-template-columns: 1.05fr 1.35fr;
+    gap: 1.5rem;
+    align-items: stretch;
+    margin-top: 1rem;
+}
