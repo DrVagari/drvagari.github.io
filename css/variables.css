@@ -1,0 +1,13 @@
+:root {
+    /* 核心色彩 */
+    --bg: #050505;
+    --p0: #00ff41; 
+    --p1: #00e5ff; 
+    --p2: #ff9d00; 
+    --p3: #ff00ff; 
+    --p4: #7cffcb;
+    
+    /* 响应式排版尺寸 */
+    --fs-h1: clamp(2.5rem, 8vw, 6rem);
+    --fs-item: clamp(1rem, 2.2vw, 1.8rem);
+}
