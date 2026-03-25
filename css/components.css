@@ -75,3 +75,4 @@
 .edu-card .edu-label { font-size: 0.85rem; letter-spacing: 4px; color: #8b8b8b; }
 .edu-card .edu-value { margin-top: 0.55rem; font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
 .edu-note { margin-top: 0.2rem; color: #b7b7b7; line-height: 1.75; font-size: 0.95rem; }
+/*页面中独立的视觉组件（卡片等）设定*/
